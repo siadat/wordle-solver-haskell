@@ -16,3 +16,7 @@ main = hspec $ do
             simpleGuesser ["abcde", "abcxy"] (DataMap.fromList [(Guess "abcde", Judge "00000")]) `shouldBe` Just (Guess "abcxy")
             simpleGuesser ["abcde", "abcxy"] (DataMap.fromList [(Guess "abcxy", Judge "00000")]) `shouldBe` Just (Guess "abcde")
             simpleGuesser ["abcde", "abcxy"] (DataMap.fromList [(Guess "abcde", Judge "00000"), (Guess "abcxy", Judge "00000")]) `shouldBe` Nothing
+        it "should solve a wordle" $ do
+            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "abcxy")) `shouldBe` Just (Guess "abcxy")
+            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "abcde")) `shouldBe` Just (Guess "abcde")
+            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "x")) `shouldBe` Nothing
