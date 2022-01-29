@@ -23,8 +23,8 @@ main = hspec $ do
             checkMask "b__" "abc" (==) `shouldBe` False
             checkMask "a__" "abc" (/=) `shouldBe` False
             checkMask "b__" "abc" (/=) `shouldBe` True
-            filterByColor '1' (Guess "abc") (Judge "121") `shouldBe` "ac"
-            filterByColor '2' (Guess "abc") (Judge "002") `shouldBe` "c"
+            filterGuessByJudge (=='1') (Guess "abc") (Judge "121") `shouldBe` "ac"
+            filterGuessByJudge (=='2') (Guess "abc") (Judge "002") `shouldBe` "c"
             stringCharFreq "hello" `shouldBe` DataMap.fromList [('h', 1), ('e', 1), ('l', 2), ('o', 1)]
 
             matchWord (Guess "hello") (Judge "22222") "hello" `shouldBe` True
@@ -43,13 +43,9 @@ main = hspec $ do
                 betterGuesser twoLetterWithoutRepeat (DataMap.fromList [(Guess "bc", Judge "02")]) `shouldBe` Just (Guess "ac")
                 betterGuesser twoLetterWithoutRepeat (DataMap.fromList [(Guess "bc", Judge "20")]) `shouldBe` Just (Guess "ba")
                 betterGuesser twoLetterWithoutRepeat (DataMap.fromList [(Guess "ab", Judge "00")]) `shouldBe` Nothing
-                -- betterGuesserAll twoLetterWithoutRepeat (DataMap.fromList [(Guess "aa", Judge "10")]) `shouldBe` [(Guess "ba")]
-                -- betterGuesser twoLetterWithoutRepeat (DataMap.fromList [(Guess "aa", Judge "10")]) `shouldBe` Just (Guess "ba")
-
                 
             let threeLetterWords = [[x, y, z] | x <- ['a'..'c'], y <- ['a'..'c'], z <- ['a'..'c']] --- "aaa", "aab", ...
              in do
-                -- mapM putStrLn threeLetterWords 
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aaa", Judge "000")]) `shouldBe` Just (Guess "bbb")
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aaa", Judge "200")]) `shouldBe` Just (Guess "abb")
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aaa", Judge "220")]) `shouldBe` Just (Guess "aab")
@@ -63,8 +59,3 @@ main = hspec $ do
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aab", Judge "210")]) `shouldBe` Just (Guess "aca")
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aab", Judge "211")]) `shouldBe` Just (Guess "aba")
                 betterGuesser threeLetterWords (DataMap.fromList [(Guess "aaa", Judge "200"), (Guess "abb", Judge "220")]) `shouldBe` Just (Guess "abc")
-
-        it "should solve a wordle" $ do
-            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "abcxy")) `shouldBe` Just (Guess "abcxy")
-            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "abcde")) `shouldBe` Just (Guess "abcde")
-            solveWordle (simpleGuesser ["abcde", "abcxy"]) (judgeWord (Master "x")) `shouldBe` Nothing

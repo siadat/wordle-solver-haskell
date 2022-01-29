@@ -7,10 +7,9 @@ module Lib
     , simpleGuesser
     , betterGuesser
     , betterGuesserAll
-    , solveWordle
     , checkMask
     , maskFunc
-    , filterByColor
+    , filterGuessByJudge
     , stringCharFreq
     , matchWord
     , checkFreqs
@@ -24,66 +23,6 @@ import qualified Data.List as DataList
 import qualified System.Random as SystemRandom
 
 type WordList = [String]
-
-startGame :: IO ()
-startGame = do
-  allWords <- readFile "./words.txt"
-  let filteredWords = filterWords (lines allWords)
-  let history = DataMap.empty
-
-  gen <- SystemRandom.newStdGen
-  let zerosAndOnes = SystemRandom.randomRs (0, 1000) gen :: [Int]
-  let shuffledWords = map (\ (_, x) -> x) $ DataList.sortBy (\(i, _) (j, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! j)) $ zip [0..] filteredWords
-
-  playTurn shuffledWords history
-  putStrLn "Game Over"
-
-showHistoryItem :: (GuessType, JudgeType) -> String
-showHistoryItem ((Guess g), (Judge j)) = "History | guess: " ++ g ++ " " ++ j
-
-playTurn :: WordList -> History -> IO ()
-playTurn filteredWords history = do
-  mapM (putStrLn) $ map showHistoryItem $ DataMap.toList history
-  let newGuess = betterGuesser filteredWords history
-  case newGuess of
-    Nothing ->
-      putStrLn "Nothing"
-    Just (Guess g) ->
-      putStrLn $ "Guess: " ++ g
-  putStr "Enter judgement: "
-  SystemIO.hFlush SystemIO.stdout
-
-  judge <- getLine
-  case newGuess of
-    Nothing ->
-      putStrLn "Nothing found"
-    Just g ->
-      if (Judge judge) == perfectMatch then
-        putStrLn "Found!"
-      else
-        let newHistory = DataMap.insert g (Judge judge) history
-         in playTurn filteredWords newHistory
-
-startGameSolver :: IO ()
-startGameSolver = do
-  putStrLn $ "Enter a new challenge: "
-  SystemIO.hFlush SystemIO.stdout
-  allWords <- readFile "./words.txt"
-  let filteredWords = filterWords (lines allWords)
-  master <- getLine
-  let guess = solveWordle (simpleGuesser filteredWords) (judgeWord (Master master))
-  putStrLn $ "You entered: " ++ master
-  putStrLn $ "My guess is: " ++ show guess
-  case guess of
-    Just (Guess g) -> putStrLn $ "Found: " ++ g
-    Nothing -> putStrLn $ "No match found"
-  putStrLn $ "GAME OVER"
-
-filterWords :: WordList -> WordList
-filterWords ws = map toLowerStr $ filter (\x -> 5 == length x) ws
-  where
-    toLowerStr :: String -> String
-    toLowerStr = map DataChar.toLower
 
 newtype MasterType = Master String
 newtype GuessType  = Guess String deriving (Show)
@@ -104,6 +43,51 @@ instance Ord GuessType where
 perfectMatch :: JudgeType
 perfectMatch = Judge "22222"
 
+startGame :: IO ()
+startGame = do
+  allWords <- readFile "./words.txt"
+  let filteredWords = filterWords (lines allWords)
+  let history = DataMap.empty
+
+  gen <- SystemRandom.newStdGen
+  let zerosAndOnes = SystemRandom.randomRs (0, 10000) gen :: [Int]
+  let shuffledWords = map (\ (_, x) -> x) $ DataList.sortBy (\(i, _) (j, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! j)) $ zip [0..] filteredWords
+
+  playTurn shuffledWords history
+  putStrLn "Game Over"
+
+showHistoryItem :: (GuessType, JudgeType) -> String
+showHistoryItem ((Guess g), (Judge j)) = "History | guess: " ++ g ++ " " ++ j
+
+playTurn :: WordList -> History -> IO ()
+playTurn filteredWords history = do
+  mapM (putStrLn) $ map showHistoryItem $ DataMap.toList history
+  let newGuess = betterGuesser filteredWords history
+  case newGuess of
+    Nothing ->
+      putStrLn "Nothing"
+    Just (Guess g) ->
+      putStrLn $ "Guess: " ++ g ++ " (enter this in the game)"
+  putStr "Enter judgement (eg 22000): "
+  SystemIO.hFlush SystemIO.stdout
+
+  judge <- getLine
+  case newGuess of
+    Nothing ->
+      putStrLn "Nothing found"
+    Just g ->
+      if (Judge judge) == perfectMatch then
+        putStrLn "Found!"
+      else
+        let newHistory = DataMap.insert g (Judge judge) history
+         in playTurn filteredWords newHistory
+
+filterWords :: WordList -> WordList
+filterWords ws = map toLowerStr $ filter (\x -> 5 == length x) ws
+  where
+    toLowerStr :: String -> String
+    toLowerStr = map DataChar.toLower
+
 simpleScorer :: WordList -> History -> [ScoredGuessType]
 simpleScorer words history =
   let isInHistory w = DataMap.member (Guess w) history
@@ -114,25 +98,6 @@ simpleScorer words history =
             | isIncludedFunc g == True = ScoredGuess ((Guess g), 0)
             | otherwise                = ScoredGuess ((Guess g), 1)
 
---
--- solver
---
-solveWordle :: Guesser -> Judger -> Maybe GuessType
-solveWordle guesser judger = solveWordleRec DataMap.empty guesser judger
-  where
-    solveWordleRec :: History -> Guesser -> Judger -> Maybe GuessType
-    solveWordleRec history guesser judger =
-      let guess = guesser history
-      in case guess of
-        Nothing -> Nothing
-        Just g -> let j = judger g
-                   in if j == perfectMatch then Just g
-                      else let h = (DataMap.insert g j history)
-                            in solveWordleRec h guesser judger
-
---
--- guesser
---
 simpleGuesser :: WordList -> History -> Maybe GuessType
 simpleGuesser words history =
   let gs = filter (\w -> not $ DataMap.member (Guess w) history) words
@@ -157,29 +122,30 @@ checkAgainstHistory [] candida = True
 
 matchWord :: GuessType -> JudgeType -> String -> Bool
 matchWord guess@(Guess gs) judge@(Judge js) candida =
-  let eqs = maskFunc guess judge (\x -> x == '2')
-      nqs = maskFunc guess judge (\x -> x /= '2')
-      cond1 = checkMask eqs candida (==)
-      cond2 = checkMask nqs candida (/=)
-      candidaFreqs = stringCharFreq (rejectByColor '2' (Guess candida) judge)
-      guessYellowFreqs = stringCharFreq (filterByColor '1' guess judge)
-      guessBlackFreqs  = stringCharFreq (filterByColor '0' guess judge)
+  let eqs = maskFunc guess judge (== '2')
+      nqs = maskFunc guess judge (/= '2')
+      condGreens = checkMask eqs candida (==)
+      condOthers = checkMask nqs candida (/=)
+      cFreqs = stringCharFreq (filterGuessByJudge (/= '2') (Guess candida) judge)
+      yFreqs = stringCharFreq (filterGuessByJudge (=='1') guess judge)
+      bFreqs = stringCharFreq (filterGuessByJudge (=='0') guess judge)
+      condFreqs = checkFreqs cFreqs yFreqs bFreqs gs
    in
-      cond1 && cond2 && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
+      condGreens && condOthers && condFreqs
 
 checkFreqs :: CharFreq -> CharFreq -> CharFreq -> String -> Bool
 checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
   let
     inCandidate = case DataMap.lookup g candidaFreqs of
       Just count -> count
-      Nothing    -> 0
+      Nothing -> 0
     inYellows = case DataMap.lookup g guessYellowFreqs of
       Just count -> count
-      Nothing    -> 0
+      Nothing -> 0
     inBlacks = case DataMap.lookup g guessBlackFreqs of
       Just count -> count
-      Nothing    -> 0
-    ok = case (inYellows>0, inBlacks>0) of
+      Nothing -> 0
+    ok = case (inYellows > 0, inBlacks > 0) of
       (True, True) -> inCandidate == inYellows
       (False, True) -> inCandidate == 0
       (True, False) -> inCandidate >= inYellows
@@ -187,21 +153,11 @@ checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
   in ok && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
 checkFreqs _ _ _ [] = True
 
-rejectByColor :: Char -> GuessType -> JudgeType -> String
-rejectByColor c (Guess (g:gs)) (Judge (j:js)) =
-  if c /= j then
-    g:(rejectByColor c (Guess gs) (Judge js))
-  else
-    (rejectByColor c (Guess gs) (Judge js))
-rejectByColor c (Guess _) (Judge _) = []
-
-filterByColor :: Char -> GuessType -> JudgeType -> String
-filterByColor c (Guess (g:gs)) (Judge (j:js)) =
-  if c == j then
-    g:(filterByColor c (Guess gs) (Judge js))
-  else
-    (filterByColor c (Guess gs) (Judge js))
-filterByColor c (Guess _) (Judge _) = []
+filterGuessByJudge :: (Char -> Bool) -> GuessType -> JudgeType -> String
+filterGuessByJudge f (Guess (g:gs)) (Judge (j:js))
+  | (f j) = g:(filterGuessByJudge f (Guess gs) (Judge js))
+  | otherwise = (filterGuessByJudge f (Guess gs) (Judge js))
+filterGuessByJudge f (Guess _) (Judge _) = []
 
 type MaskType = String
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
@@ -217,11 +173,6 @@ maskFunc (Guess (g:gs)) (Judge (j:js)) f =
    in (c:l)
 maskFunc (Guess _) (Judge _) f = ""
 
-
-
---
--- judger
---
 type CharFreq = DataMap.Map Char Int
 
 judgeWord :: MasterType -> GuessType -> JudgeType
@@ -243,7 +194,7 @@ judgeWord master@(Master m) guess = judgeWordRec master guess (stringCharFreq m)
 decrCharFreq :: Char -> CharFreq -> CharFreq
 decrCharFreq c freqs =
   let updated = DataMap.insertWith (+) c (-1) $ freqs
-  in DataMap.filter (\v -> v > 0) updated
+  in DataMap.filter (> 0) updated
 
 stringCharFreq :: String -> CharFreq
 stringCharFreq word = DataMap.fromList
