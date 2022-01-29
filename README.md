@@ -5,6 +5,7 @@ A Wordle solver written in Haskell. This tool suggests words (eg `boxer`), you g
 This tool doesn't use any heuristics. It only suggests the first word that complies with the previous seen colors and guesses.
 
 I am learning Haskell and I would highly appreciate your feedback!
+The [main logic](https://github.com/siadat/wordle-solver-haskell/blob/main/src/Lib.hs#L131-L142) and its [tests](https://github.com/siadat/wordle-solver-haskell/blob/main/test/Spec.hs#L30-L34) might be interesting.
 
 ## Usage
 
