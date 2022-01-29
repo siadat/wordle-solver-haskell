@@ -19,13 +19,12 @@ test:
 
 .PHONY: build
 build:
-	stack build \
+	@stack build \
 		--no-keep-going \
 		--ghc-options $(GHC_OPTIONS)
 
 .PHONY: run
 run: build words.txt
-	@echo "Running:"
 	@stack exec wordle-solver-exe
 
 .PHONY: clean

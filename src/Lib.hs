@@ -52,23 +52,29 @@ startGame = do
   gen <- SystemRandom.newStdGen
   let zerosAndOnes = SystemRandom.randomRs (0, 10000) gen :: [Int]
   let shuffledWords = map (\ (_, x) -> x) $ DataList.sortBy (\(i, _) (j, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! j)) $ zip [0..] filteredWords
+  putStrLn "Guide:"
+  putStrLn "0     = black"
+  putStrLn "1     = yellow"
+  putStrLn "2     = green"
+  putStrLn "22001 = 2 greens, 2 blacks, 1 yellow"
+  putStrLn ""
 
   playTurn shuffledWords history
-  putStrLn "Game Over"
+  putStrLn "Bye"
 
 showHistoryItem :: (GuessType, JudgeType) -> String
 showHistoryItem ((Guess g), (Judge j)) = "History | guess: " ++ g ++ " " ++ j
 
 playTurn :: WordList -> History -> IO ()
 playTurn filteredWords history = do
-  mapM (putStrLn) $ map showHistoryItem $ DataMap.toList history
+  -- mapM (putStrLn) $ map showHistoryItem $ DataMap.toList history
   let newGuess = betterGuesser filteredWords history
   case newGuess of
     Nothing ->
       putStrLn "Nothing"
     Just (Guess g) ->
-      putStrLn $ "Guess: " ++ g ++ " (enter this in the game)"
-  putStr "Enter judgement (eg 22000): "
+      putStrLn $ "Try this word: " ++ g
+  putStr "Enter colors here: "
   SystemIO.hFlush SystemIO.stdout
 
   judge <- getLine
