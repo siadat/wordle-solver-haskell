@@ -34,6 +34,7 @@ library
       base >=4.7 && <5
     , containers
     , hspec
+    , random
   default-language: Haskell2010
 
 executable wordle-solver-exe
@@ -47,6 +48,7 @@ executable wordle-solver-exe
       base >=4.7 && <5
     , containers
     , hspec
+    , random
     , wordle-solver
   default-language: Haskell2010
 
@@ -62,5 +64,6 @@ test-suite wordle-solver-test
       base >=4.7 && <5
     , containers
     , hspec
+    , random
     , wordle-solver
   default-language: Haskell2010
