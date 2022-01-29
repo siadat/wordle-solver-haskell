@@ -33,6 +33,7 @@ type History = DataMap.Map GuessType JudgeType
 type HistoryList = [(GuessType, JudgeType)]
 type Judger  = GuessType -> JudgeType
 type Guesser = History -> Maybe GuessType
+type Candidate = String
 
 instance Eq GuessType where
   (Guess a) == (Guess b) = a == b
@@ -126,7 +127,7 @@ checkAgainstHistory :: HistoryList -> String -> Bool
 checkAgainstHistory ((g, j):hs) candida = matchWord g j candida && checkAgainstHistory hs candida
 checkAgainstHistory [] candida = True
 
-matchWord :: GuessType -> JudgeType -> String -> Bool
+matchWord :: GuessType -> JudgeType -> Candidate -> Bool
 matchWord guess@(Guess gs) judge@(Judge js) candida =
   let eqs = maskFunc guess judge (== '2')
       nqs = maskFunc guess judge (/= '2')
