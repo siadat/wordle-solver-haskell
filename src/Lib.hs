@@ -108,7 +108,7 @@ simpleScorer words history =
             | otherwise        = ScoredGuess (Guess g, 1)
 
 simpleGuesser :: WordList -> History -> Maybe GuessType
-simpleGuesser words history = fmap Guess (DataList.find (\w -> not $ DataMap.member (Guess w) history) words)
+simpleGuesser words history = fmap Guess (DataList.find (\w -> DataMap.notMember (Guess w) history) words)
 
 betterGuesser :: WordList -> History -> Maybe GuessType
 betterGuesser words history = DataMaybe.listToMaybe $ betterGuesserAll words history
