@@ -1,5 +1,7 @@
 # wordle-solver-haskell
 
+[![Haskell CI](https://github.com/siadat/wordle-solver-haskell/actions/workflows/haskell.yml/badge.svg)](https://github.com/siadat/wordle-solver-haskell/actions/workflows/haskell.yml)
+
 A Wordle solver written in Haskell. This tool suggests words (eg `boxer`) and then you provide the colors for that word (eg `02022`).
 No heuristics are used. The tool only suggests the first word that complies with previous seen colors and guesses.
 
