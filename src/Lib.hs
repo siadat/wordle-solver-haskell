@@ -183,9 +183,7 @@ judgeWord master@(Master m) guess = judgeWordRec master guess (countCharFreq m) 
     judgeWordRec _ _ _ acc = Colors $ reverse acc
 
 decrCharFreq :: Char -> CharFreq -> CharFreq
-decrCharFreq c freqs =
-  let updated = DataMap.insertWith (+) c (-1) freqs
-  in  DataMap.filter (> 0) updated
+decrCharFreq c = DataMap.filter (>0) . DataMap.insertWith (+) c (-1)
 
 countCharFreq :: String -> CharFreq
 countCharFreq word = DataMap.fromList
