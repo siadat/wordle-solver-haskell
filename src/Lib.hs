@@ -152,10 +152,7 @@ checkMask [] [] _ = True
 checkMask _ _ _ = False
 
 filterGuessByColor :: (Char -> Bool) -> GuessType -> ColorsType -> String
-filterGuessByColor f (Guess (g:gs)) (Colors (c:cs))
-  | f c = g:filterGuessByColor f (Guess gs) (Colors cs)
-  | otherwise = filterGuessByColor f (Guess gs) (Colors cs)
-filterGuessByColor f (Guess _) (Colors _) = []
+filterGuessByColor f (Guess g) (Colors c) = map fst . filter (f . snd) $ zip g c
 
 maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
 maskFunc (Guess g) (Colors c) f = zipWith (curry f') g c
