@@ -172,14 +172,12 @@ judgeWord master@(Master m) guess = judgeWordRec master guess (countCharFreq m) 
     judgeWordRec :: MasterType -> GuessType -> CharFreq -> [Char] -> ColorsType
     judgeWordRec (Master (m:ms)) (Guess (g:gs)) remaining acc =
       let prependAndContinue c = judgeWordRec (Master ms) (Guess gs) (decrCharFreq g remaining) (c:acc)
-      in
-        if DataMap.member g remaining then
-          if g == m then
-            prependAndContinue '2'
-          else
-            prependAndContinue '1'
-        else
-          prependAndContinue '0'
+      in prependAndContinue ans
+        where
+          ans
+              | DataMap.notMember g remaining = '0'
+              | g == m = '2'
+              | otherwise = '1'
     judgeWordRec _ _ _ acc = Colors $ reverse acc
 
 decrCharFreq :: Char -> CharFreq -> CharFreq
