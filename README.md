@@ -18,24 +18,14 @@ Guide:
 0     = black
 1     = yellow
 2     = green
+Example:
 22001 = 2 greens, 2 blacks, 1 yellow
 
-Try this word: nurls
-Enter colors here: 00100
-Try this word: frati
-Enter colors here: 01000
-Try this word: reeve
-Enter colors here: 11000
-Try this word: hyper
-Enter colors here: 00022
-Try this word: cower
-Enter colors here: 02022
-Try this word: joker
-Enter colors here: 02022
-Try this word: moder
-Enter colors here: 02022
-Try this word: boxer
-Enter colors here: 22222
+Enter colors for 'showy': 00000
+Enter colors for 'angle': 00001
+Enter colors for 'tepid': 01010
+Enter colors for 'fixer': 11021
+Enter colors for 'brief': 22222
 Found!
 Bye
 ```
