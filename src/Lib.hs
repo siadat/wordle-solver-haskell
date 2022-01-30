@@ -17,6 +17,7 @@ module Lib
     ) where
 
 import qualified Data.Char as DataChar
+import qualified Data.Maybe as DataMaybe
 import qualified System.IO as SystemIO
 import qualified Data.Map as DataMap
 import qualified Data.List as DataList
@@ -52,7 +53,7 @@ startGame = do
 
   gen <- SystemRandom.newStdGen
   let zerosAndOnes = SystemRandom.randomRs (0, 10000) gen :: [Int]
-  let shuffledWords = map (\ (_, x) -> x) $ DataList.sortBy (\(i, _) (c, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! c)) $ zip [0..] filteredWords
+  let shuffledWords = map snd $ DataList.sortBy (\(i, _) (c, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! c)) $ zip [0..] filteredWords
   putStrLn "Guide:"
   putStrLn "0     = black"
   putStrLn "1     = yellow"
@@ -64,7 +65,7 @@ startGame = do
   putStrLn "Bye"
 
 showHistoryItem :: (GuessType, ColorsType) -> String
-showHistoryItem ((Guess g), (Colors c)) = "History | guess: " ++ g ++ " " ++ c
+showHistoryItem (Guess g, Colors c) = "History | guess: " ++ g ++ " " ++ c
 
 playTurn :: WordList -> History -> IO ()
 playTurn filteredWords history = do
@@ -83,7 +84,7 @@ playTurn filteredWords history = do
     Nothing ->
       putStrLn "Nothing found"
     Just g ->
-      if (Colors colors) == perfectMatch then
+      if Colors colors == perfectMatch then
         putStrLn "Found!"
       else
         let newHistory = DataMap.insert g (Colors colors) history
@@ -102,8 +103,8 @@ simpleScorer words history =
     where
         f :: (String -> Bool) -> (GuessType, ColorsType) -> ScoredGuessType
         f isIncludedFunc (Guess g, Colors _)
-            | isIncludedFunc g == True = ScoredGuess ((Guess g), 0)
-            | otherwise                = ScoredGuess ((Guess g), 1)
+            | isIncludedFunc g = ScoredGuess (Guess g, 0)
+            | otherwise        = ScoredGuess (Guess g, 1)
 
 simpleGuesser :: WordList -> History -> Maybe GuessType
 simpleGuesser words history =
@@ -121,11 +122,11 @@ betterGuesser words history =
 
 betterGuesserAll :: WordList -> History -> [GuessType]
 betterGuesserAll words history =
-  map (\w -> (Guess w)) $ filter (\w -> checkAgainstHistory (DataMap.toList history) w) words
+  map Guess $ filter (\w -> checkAgainstHistory w (DataMap.toList history)) words
 
-checkAgainstHistory :: HistoryList -> String -> Bool
-checkAgainstHistory ((g, c):hs) candidate = matchWord g c candidate && checkAgainstHistory hs candidate
-checkAgainstHistory [] candidate = True
+checkAgainstHistory :: String -> HistoryList -> Bool
+checkAgainstHistory candidate ((g, c):hs) = matchWord g c candidate && checkAgainstHistory candidate hs
+checkAgainstHistory candidate [] = True
 
 
 matchWord :: GuessType -> ColorsType -> CandidateType -> Bool
@@ -144,15 +145,9 @@ matchWord guess@(Guess gs) colors@(Colors cs) candidate =
 checkFreqs :: CharFreq -> CharFreq -> CharFreq -> String -> Bool
 checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
   let
-    inCandidate = case DataMap.lookup g candidaFreqs of
-      Just count -> count
-      Nothing -> 0
-    inYellows = case DataMap.lookup g guessYellowFreqs of
-      Just count -> count
-      Nothing -> 0
-    inBlacks = case DataMap.lookup g guessBlackFreqs of
-      Just count -> count
-      Nothing -> 0
+    inCandidate = DataMaybe.fromMaybe 0 (DataMap.lookup g candidaFreqs)
+    inYellows   = DataMaybe.fromMaybe 0 (DataMap.lookup g guessYellowFreqs)
+    inBlacks    = DataMaybe.fromMaybe 0 (DataMap.lookup g guessBlackFreqs)
     ok = case (inYellows > 0, inBlacks > 0) of
       (True, True) -> inCandidate == inYellows
       (False, True) -> inCandidate == 0
@@ -163,20 +158,20 @@ checkFreqs _ _ _ [] = True
 
 filterGuessByColor :: (Char -> Bool) -> GuessType -> ColorsType -> String
 filterGuessByColor f (Guess (g:gs)) (Colors (c:cs))
-  | (f c) = g:(filterGuessByColor f (Guess gs) (Colors cs))
-  | otherwise = (filterGuessByColor f (Guess gs) (Colors cs))
+  | f c = g:filterGuessByColor f (Guess gs) (Colors cs)
+  | otherwise = filterGuessByColor f (Guess gs) (Colors cs)
 filterGuessByColor f (Guess _) (Colors _) = []
 
 type MaskType = String
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
 checkMask ('_':ms) (w:ws) f = checkMask ms ws f
-checkMask (g:ms) (w:ws) f = (f g w) && checkMask ms ws f
+checkMask (g:ms) (w:ws) f = f g w && checkMask ms ws f
 checkMask [] [] _ = True
 checkMask _ _ _ = False
 
 maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
 maskFunc (Guess (g:gs)) (Colors (c:cs)) f =
-  let ch = (if (f c) then g else '_')
+  let ch = if f c then g else '_'
       l = maskFunc (Guess gs) (Colors cs) f
    in (ch:l)
 maskFunc (Guess _) (Colors _) f = ""
@@ -190,22 +185,22 @@ judgeWord master@(Master m) guess = judgeWordRec master guess (countCharFreq m) 
     judgeWordRec (Master (m:ms)) (Guess (g:gs)) remaining acc =
       let prependAndContinue c = judgeWordRec (Master ms) (Guess gs) (decrCharFreq g remaining) (c:acc)
       in
-        if (DataMap.member g remaining) then
+        if DataMap.member g remaining then
           if g == m then
             prependAndContinue '2'
           else
             prependAndContinue '1'
         else
           prependAndContinue '0'
-    judgeWordRec _ _ _ acc = (Colors $ reverse acc)
+    judgeWordRec _ _ _ acc = Colors $ reverse acc
 
 decrCharFreq :: Char -> CharFreq -> CharFreq
 decrCharFreq c freqs =
-  let updated = DataMap.insertWith (+) c (-1) $ freqs
+  let updated = DataMap.insertWith (+) c (-1) freqs
   in DataMap.filter (> 0) updated
 
 countCharFreq :: String -> CharFreq
 countCharFreq word = DataMap.fromList
-                    $ Prelude.map (\x->((head x), (length x)))
+                    $ Prelude.map (\x->(head x, length x))
                     $ DataList.group
                     $ DataList.sort word
