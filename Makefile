@@ -15,6 +15,7 @@ ghci:
 .PHONY: test
 test:
 	stack test
+	stack exec hlint > /dev/null || stack install hlint
 	stack exec hlint src -- --report=report.html
 
 .PHONY: build
