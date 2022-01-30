@@ -118,8 +118,7 @@ betterGuesserAll words history =
   map Guess $ filter (\w -> checkAgainstHistory w (DataMap.toList history)) words
 
 checkAgainstHistory :: String -> HistoryList -> Bool
-checkAgainstHistory candidate ((g, c):hs) = matchWord g c candidate && checkAgainstHistory candidate hs
-checkAgainstHistory candidate [] = True
+checkAgainstHistory candidate = foldl (\acc (g, c) -> acc && matchWord g c candidate) True
 
 matchWord :: GuessType -> ColorsType -> CandidateType -> Bool
 matchWord guess@(Guess gs) colors@(Colors cs) candidate =
