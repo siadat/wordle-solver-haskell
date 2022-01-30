@@ -146,10 +146,8 @@ checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
 checkFreqs _ _ _ [] = True
 
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
-checkMask ('_':ms) (w:ws) f = checkMask ms ws f
-checkMask (g:ms) (w:ws) f = f g w && checkMask ms ws f
-checkMask [] [] _ = True
-checkMask _ _ _ = False
+checkMask ms ws f = length ms == length ws && and (zipWith f' ms ws)
+  where f' g w = g == '_' || f g w
 
 filterGuessByColor :: (Char -> Bool) -> GuessType -> ColorsType -> String
 filterGuessByColor f (Guess g) (Colors c) = map fst . filter (f . snd) $ zip g c
