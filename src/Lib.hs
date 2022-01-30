@@ -132,18 +132,17 @@ matchWord guess@(Guess gs) colors@(Colors cs) candidate =
       condGreens && condOthers && condFreqs
 
 checkFreqs :: CharFreq -> CharFreq -> CharFreq -> String -> Bool
-checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
-  let
-    inCandidate = DataMaybe.fromMaybe 0 (DataMap.lookup g candidaFreqs)
-    inYellows   = DataMaybe.fromMaybe 0 (DataMap.lookup g guessYellowFreqs)
-    inBlacks    = DataMaybe.fromMaybe 0 (DataMap.lookup g guessBlackFreqs)
-    ok = case (inYellows > 0, inBlacks > 0) of
-      (True, True) -> inCandidate == inYellows
-      (False, True) -> inCandidate == 0
-      (True, False) -> inCandidate >= inYellows
-      (False, False) -> True
-  in  ok && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
-checkFreqs _ _ _ [] = True
+checkFreqs cFreq yFreq bFreq = foldl f' True
+  where
+    f' acc g = let inCandidate = DataMaybe.fromMaybe 0 (DataMap.lookup g cFreq)
+                   inYellows   = DataMaybe.fromMaybe 0 (DataMap.lookup g yFreq)
+                   inBlacks    = DataMaybe.fromMaybe 0 (DataMap.lookup g bFreq)
+                   ok = case (inYellows > 0, inBlacks > 0) of
+                     (True,   True) -> inCandidate == inYellows
+                     (False,  True) -> inCandidate == 0
+                     (True,  False) -> inCandidate >= inYellows
+                     (False, False) -> True
+               in acc && ok
 
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
 checkMask ms ws f = length ms == length ws && and (zipWith f' ms ws)
