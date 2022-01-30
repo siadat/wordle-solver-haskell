@@ -23,19 +23,19 @@ import qualified Data.Map as DataMap
 import qualified Data.List as DataList
 import qualified System.Random as SystemRandom
 
-type WordList = [String]
-
-newtype MasterType = Master String
-newtype GuessType  = Guess String deriving (Show)
 newtype ColorsType  = Colors String deriving (Eq, Show)
+newtype GuessType  = Guess String deriving (Show)
+newtype MasterType = Master String
 newtype ScoredGuessType = ScoredGuess (GuessType, Int)
 
+type CandidateType = String
+type CharFreq = DataMap.Map Char Int
+type Guesser = History -> Maybe GuessType
 type History = DataMap.Map GuessType ColorsType
 type HistoryList = [(GuessType, ColorsType)]
 type Judger  = GuessType -> ColorsType
-type Guesser = History -> Maybe GuessType
-type CandidateType = String
 type MaskType = String
+type WordList = [String]
 
 instance Eq GuessType where
   (Guess a) == (Guess b) = a == b
@@ -154,8 +154,6 @@ filterGuessByColor f (Guess g) (Colors c) = map fst . filter (f . snd) $ zip g c
 maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
 maskFunc (Guess g) (Colors c) f = zipWith (curry f') g c
   where f' (g, c) = if f c then g else '_'
-
-type CharFreq = DataMap.Map Char Int
 
 judgeWord :: MasterType -> GuessType -> ColorsType
 judgeWord (Master m) (Guess g) = Colors
