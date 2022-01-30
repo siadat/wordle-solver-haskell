@@ -37,3 +37,6 @@ Bye
 ```
 make test
 ```
+
+## Acknowledgements
+- Thanks @Zij-IT for improving the code via https://github.com/siadat/wordle-solver-haskell/pull/1
