@@ -87,7 +87,7 @@ playTurn filteredWords history = do
         putStrLn "Found!"
       else
         let newHistory = DataMap.insert g (Colors colors) history
-         in playTurn filteredWords newHistory
+        in  playTurn filteredWords newHistory
 
 filterWords :: WordList -> WordList
 filterWords ws = map toLowerStr $ filter (\x -> 5 == length x) ws
@@ -98,7 +98,7 @@ filterWords ws = map toLowerStr $ filter (\x -> 5 == length x) ws
 simpleScorer :: WordList -> History -> [ScoredGuessType]
 simpleScorer words history =
   let isInHistory w = DataMap.member (Guess w) history
-   in map (f isInHistory) $ DataMap.toList history
+  in  map (f isInHistory) $ DataMap.toList history
     where
         f :: (String -> Bool) -> (GuessType, ColorsType) -> ScoredGuessType
         f isIncludedFunc (Guess g, Colors _)
@@ -128,7 +128,7 @@ matchWord guess@(Guess gs) colors@(Colors cs) candidate =
       yFreqs = countCharFreq (filterGuessByColor (=='1') guess colors)
       bFreqs = countCharFreq (filterGuessByColor (=='0') guess colors)
       condFreqs = checkFreqs cFreqs yFreqs bFreqs gs
-   in
+  in
       condGreens && condOthers && condFreqs
 
 checkFreqs :: CharFreq -> CharFreq -> CharFreq -> String -> Bool
@@ -142,7 +142,7 @@ checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
       (False, True) -> inCandidate == 0
       (True, False) -> inCandidate >= inYellows
       (False, False) -> True
-  in ok && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
+  in  ok && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
 checkFreqs _ _ _ [] = True
 
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
@@ -161,7 +161,7 @@ maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
 maskFunc (Guess (g:gs)) (Colors (c:cs)) f =
   let ch = if f c then g else '_'
       l = maskFunc (Guess gs) (Colors cs) f
-   in (ch:l)
+  in  (ch:l)
 maskFunc (Guess _) (Colors _) f = ""
 
 type CharFreq = DataMap.Map Char Int
@@ -185,7 +185,7 @@ judgeWord master@(Master m) guess = judgeWordRec master guess (countCharFreq m) 
 decrCharFreq :: Char -> CharFreq -> CharFreq
 decrCharFreq c freqs =
   let updated = DataMap.insertWith (+) c (-1) freqs
-  in DataMap.filter (> 0) updated
+  in  DataMap.filter (> 0) updated
 
 countCharFreq :: String -> CharFreq
 countCharFreq word = DataMap.fromList
