@@ -48,13 +48,11 @@ perfectMatch = Colors "22222"
 
 startGame :: IO ()
 startGame = do
-  allWords <- readFile "./words.txt"
-  let filteredWords = filterWords (lines allWords)
+  filteredWords <- filterWords . lines <$> readFile "./words.txt"
+  zerosAndOnes <- SystemRandom.randomRs (0, 10000) <$> SystemRandom.newStdGen :: IO [Int]
   let history = DataMap.empty
-
-  gen <- SystemRandom.newStdGen
-  let zerosAndOnes = SystemRandom.randomRs (0, 10000) gen :: [Int]
   let shuffledWords = map snd $ DataList.sortBy (\(i, _) (c, _) -> compare (zerosAndOnes !! i) (zerosAndOnes !! c)) $ zip [0..] filteredWords
+
   putStrLn "Guide:"
   putStrLn "0     = black"
   putStrLn "1     = yellow"
