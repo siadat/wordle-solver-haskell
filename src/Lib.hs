@@ -164,18 +164,19 @@ maskFunc (Guess g) (Colors c) f = zipWith (curry f') g c
 type CharFreq = DataMap.Map Char Int
 
 judgeWord :: MasterType -> GuessType -> ColorsType
-judgeWord master@(Master m) guess = judgeWordRec master guess (countCharFreq m) ""
+judgeWord (Master m) (Guess g) = Colors
+                                . fst
+                                . foldr toColorDigit ("", countCharFreq m)
+                                $ zip m g
   where
-    judgeWordRec :: MasterType -> GuessType -> CharFreq -> [Char] -> ColorsType
-    judgeWordRec (Master (m:ms)) (Guess (g:gs)) remaining acc =
-      let prependAndContinue c = judgeWordRec (Master ms) (Guess gs) (decrCharFreq g remaining) (c:acc)
-      in prependAndContinue ans
-        where
-          ans
-              | DataMap.notMember g remaining = '0'
+    toColorDigit :: (Char, Char) -> (String, CharFreq) -> (String, CharFreq)
+    toColorDigit (m, g) (acc, freqs) = (color:acc, decrCharFreq g freqs)
+      where
+        color :: Char
+        color
+              | DataMap.notMember g freqs = '0'
               | g == m = '2'
               | otherwise = '1'
-    judgeWordRec _ _ _ acc = Colors $ reverse acc
 
 decrCharFreq :: Char -> CharFreq -> CharFreq
 decrCharFreq c = DataMap.filter (>0) . DataMap.insertWith (+) c (-1)
