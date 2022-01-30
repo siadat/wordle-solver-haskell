@@ -57,6 +57,7 @@ startGame = do
   putStrLn "0     = black"
   putStrLn "1     = yellow"
   putStrLn "2     = green"
+  putStrLn "Example:"
   putStrLn "22001 = 2 greens, 2 blacks, 1 yellow"
   putStrLn ""
 
@@ -74,10 +75,8 @@ playTurn filteredWords history = do
     Nothing ->
       putStrLn "Nothing"
     Just (Guess g) ->
-      putStrLn $ "Try this word: " ++ g
-  putStr "Enter colors here: "
+      putStr $ "Enter colors for '" ++ g ++ "': "
   SystemIO.hFlush SystemIO.stdout
-
   colors <- getLine
   case newGuess of
     Nothing ->
