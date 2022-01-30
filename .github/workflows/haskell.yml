@@ -18,11 +18,9 @@ jobs:
           # cabal-version: 'latest'. Omitted, but defaults to 'latest'
           enable-stack: true
           stack-version: 'latest'
-      - run: make test
   hlint:
     runs-on: ubuntu-latest
     steps:
-    - run: make test
     - uses: actions/checkout@v2
     - uses: haskell/actions/setup@v1
       with:
