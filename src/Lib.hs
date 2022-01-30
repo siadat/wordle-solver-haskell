@@ -35,6 +35,7 @@ type HistoryList = [(GuessType, ColorsType)]
 type Judger  = GuessType -> ColorsType
 type Guesser = History -> Maybe GuessType
 type CandidateType = String
+type MaskType = String
 
 instance Eq GuessType where
   (Guess a) == (Guess b) = a == b
@@ -128,7 +129,6 @@ checkAgainstHistory :: String -> HistoryList -> Bool
 checkAgainstHistory candidate ((g, c):hs) = matchWord g c candidate && checkAgainstHistory candidate hs
 checkAgainstHistory candidate [] = True
 
-
 matchWord :: GuessType -> ColorsType -> CandidateType -> Bool
 matchWord guess@(Guess gs) colors@(Colors cs) candidate =
   let eqs = maskFunc guess colors (== '2')
@@ -156,18 +156,17 @@ checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs (g:gs) =
   in ok && checkFreqs candidaFreqs guessYellowFreqs guessBlackFreqs gs
 checkFreqs _ _ _ [] = True
 
-filterGuessByColor :: (Char -> Bool) -> GuessType -> ColorsType -> String
-filterGuessByColor f (Guess (g:gs)) (Colors (c:cs))
-  | f c = g:filterGuessByColor f (Guess gs) (Colors cs)
-  | otherwise = filterGuessByColor f (Guess gs) (Colors cs)
-filterGuessByColor f (Guess _) (Colors _) = []
-
-type MaskType = String
 checkMask :: MaskType -> String -> (Char -> Char -> Bool) -> Bool
 checkMask ('_':ms) (w:ws) f = checkMask ms ws f
 checkMask (g:ms) (w:ws) f = f g w && checkMask ms ws f
 checkMask [] [] _ = True
 checkMask _ _ _ = False
+
+filterGuessByColor :: (Char -> Bool) -> GuessType -> ColorsType -> String
+filterGuessByColor f (Guess (g:gs)) (Colors (c:cs))
+  | f c = g:filterGuessByColor f (Guess gs) (Colors cs)
+  | otherwise = filterGuessByColor f (Guess gs) (Colors cs)
+filterGuessByColor f (Guess _) (Colors _) = []
 
 maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
 maskFunc (Guess (g:gs)) (Colors (c:cs)) f =
