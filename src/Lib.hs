@@ -158,11 +158,8 @@ filterGuessByColor f (Guess (g:gs)) (Colors (c:cs))
 filterGuessByColor f (Guess _) (Colors _) = []
 
 maskFunc :: GuessType -> ColorsType -> (Char -> Bool) -> MaskType
-maskFunc (Guess (g:gs)) (Colors (c:cs)) f =
-  let ch = if f c then g else '_'
-      l = maskFunc (Guess gs) (Colors cs) f
-  in  (ch:l)
-maskFunc (Guess _) (Colors _) f = ""
+maskFunc (Guess g) (Colors c) f = zipWith (curry f') g c
+  where f' (g, c) = if f c then g else '_'
 
 type CharFreq = DataMap.Map Char Int
 
